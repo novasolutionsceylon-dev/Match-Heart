@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Match Heart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-72 bg-white border-r border-gray-200 hidden md:flex flex-col z-10">
+        <div class="p-6 border-b text-center">
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-heart-pulse text-rose-500"></i> Match Heart</h1>
+        </div>
+
+             <!-- Current User Profile Info -->
+            <div class="p-6 text-center border-b border-gray-100">
+                <div class="relative inline-block">
+                    <img id="my-avatar" src="https://api.dicebear.com/7.x/adventurer/svg?seed=placeholder" alt="My Avatar" class="w-24 h-24 rounded-full border-4 border-rose-100 shadow-md mx-auto bg-white">
+                    <div class="absolute bottom-1 right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
+                </div>
+                <h2 id="my-name" class="mt-4 text-lg font-bold text-gray-800">Loading...</h2>
+                <p id="my-email" class="text-sm text-gray-500">loading@email.com</p>
+                <div class="mt-4 bg-rose-50 rounded-lg p-3 text-sm text-rose-600 font-medium border border-rose-100">
+                    <i class="fa-solid fa-gem mr-1"></i> Premium Member
+                </div>
+            </div>
+            
+            <nav class="p-4 space-y-2 flex-1">
+            <a href="about-me.html" class="flex items-center px-4 py-3 bg-rose-50 text-rose-600 rounded-xl font-medium transition">
+                <i class="fa-solid fa-user w-6"></i> About Me
+            </a>
+            <a href="dashboard.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                <i class="fa-solid fa-house w-6"></i> Discover
+            </a>
+            <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="fa-solid fa-heart w-6"></i> Likes You
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="fa-solid fa-message w-6"></i> Messages
+                </a>
+             </nav>
+             <div class="p-4 border-t border-gray-100">
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium transition">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 px-8 py-5 flex flex-col sm:flex-row justify-between items-center z-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Profile Setting</h2>
+        </header>
+        <div class="mt-8 max-w-3xl mx-auto">
+
+            
+            <form id="profile-form" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                <!-- Readonly Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
+                    <div><label class="block text-sm font-medium text-gray-500">Email</label><input type="text" id="email" readonly class="mt-1 w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-500">First Name</label><input type="text" id="first_name" readonly class="mt-1 w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-500 outline-none"></div>
+                </div>
+
+                <!-- Editable Dropdowns -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Looking For</label>
+                        <select id="looking_for" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-rose-500 outline-none">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">District</label>
+                        <select id="district" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-rose-500 outline-none">
+                            <option value="Colombo">Colombo</option>
+                            <option value="Gampaha">Gampaha</option>
+                            <option value="Kalutara">Kalutara</option>
+                            <option value="Kandy">Kandy</option>
+                            <option value="Matale">Matale</option>
+                            <option value="Nuwara Eliya">Nuwara Eliya</option>
+                            <option value="Galle">Galle</option>
+                            <option value="Matara">Matara</option>
+                            <option value="Hambantota">Hambantota</option>
+                            <option value="Jaffna">Jaffna</option>
+                            <option value="Kilinochchi">Kilinochchi</option>
+                            <option value="Mannar">Mannar</option>
+                            <option value="Vavuniya">Vavuniya</option>
+                            <option value="Mullaitivu">Mullaitivu</option>
+                            <option value="Batticaloa">Batticaloa</option>
+                            <option value="Ampara">Ampara</option>
+                            <option value="Trincomalee">Trincomalee</option>
+                            <option value="Kurunegala">Kurunegala</option>
+                            <option value="Puttalam">Puttalam</option>
+                            <option value="Anuradhapura">Anuradhapura</option>
+                            <option value="Polonnaruwa">Polonnaruwa</option>
+                            <option value="Badulla">Badulla</option>
+                            <option value="Monaragala">Monaragala</option>
+                            <option value="Ratnapura">Ratnapura</option>
+                            <option value="Kegalle">Kegalle</option>
+                            <option value="Abroad">Abroad</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Religion</label>
+                        <select id="religion" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-rose-500 outline-none">
+                            <option value="Buddhist">Buddhist</option>
+                            <option value="Catholic">Catholic</option>
+                            <option value="Christian">Christian</option>
+                            <option value="Hindu">Hindu</option>
+                            <option value="Muslim">Muslim</option>
+                            <option value="Other">Other</option>
+                            <option value="None">None</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Education</label>
+                        <select id="education" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-rose-500 outline-none">
+                            <option value="O/L">O/L</option>
+                            <option value="A/L">A/L</option>
+                            <option value="Diploma">Diploma</option>
+                            <option value="Higher Diploma">Higher Diploma</option>
+                            <option value="Bachelor Degree">Bachelor Degree</option>
+                            <option value="Master Degree">Master Degree</option>
+                            <option value="PhD">PhD</option>
+                            <option value="Professional Qualification">Professional Qualification</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Occupation</label>
+                        <select id="occupation" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-rose-500 outline-none">
+                            <option value="Student">Student</option>
+                            <option value="Software Engineer">Software Engineer</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Nurse">Nurse</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Accountant">Accountant</option>
+                            <option value="Banking Professional">Banking Professional</option>
+                            <option value="Business Owner">Business Owner</option>
+                            <option value="Marketing Professional">Marketing Professional</option>
+                            <option value="Government Employee">Government Employee</option>
+                            <option value="Engineer">Engineer</option>
+                            <option value="Lawyer">Lawyer</option>
+                            <option value="Artist/Designer">Artist/Designer</option>
+                            <option value="Self-Employed">Self-Employed</option>
+                            <option value="Unemployed">Unemployed</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div><label class="block text-sm font-medium text-gray-700">Bio</label><textarea id="bio" rows="3" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-rose-500 outline-none"></textarea></div>
+
+                <button type="submit" id="save-btn" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-lg transition">Save Changes</button>
+            </form>
+        </div>
+    </main>
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <div class="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-question text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Save Changes?</h3>
+            <p class="text-gray-500 mb-6">Are you sure you want to save these changes to your profile?</p>
+            <div class="flex gap-4">
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50">Cancel</button>
+                <button onclick="confirmSave()" class="flex-1 py-3 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600">Save Now</button>
+            </div>
+        </div>
+    </div>
+        
+
+    <script>
+        const SUPABASE_URL = 'https://tnvcjxgsocikbvtbnyxw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRudmNqeGdzb2Npa2J2dGJueXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODAzMTIsImV4cCI6MjA5NTU1NjMxMn0.6JCAcDveue7QE4Z4Tl2she9OHpSIomYeL2vI7NqtTZ0';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        window.onload = async () => {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) window.location.href = 'login.html';
+
+            const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            if (data) {
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('first_name').value = data.first_name || '';
+                // Set dropdowns
+                ['looking_for', 'district', 'religion', 'education', 'occupation'].forEach(id => {
+                    if(data[id]) document.getElementById(id).value = data[id];
+                });
+                document.getElementById('bio').value = data.bio || '';
+            }
+        };
+
+        document.getElementById('profile-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const updates = {
+                looking_for: document.getElementById('looking_for').value,
+                district: document.getElementById('district').value,
+                religion: document.getElementById('religion').value,
+                education: document.getElementById('education').value,
+                occupation: document.getElementById('occupation').value,
+                bio: document.getElementById('bio').value,
+            };
+            const { error } = await supabaseClient.from('profiles').update(updates).eq('id', user.id);
+            alert(error ? 'Error: ' + error.message : 'Profile updated successfully!');
+        };
+        // 1. Modal open/close madalu helper functions
+        function openModal() { document.getElementById('confirm-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
+
+        // 2. Form submit button na onclick badalisi
+        document.getElementById('profile-form').onsubmit = (e) => {
+            e.preventDefault();
+            openModal(); // Modal annu open madi
+        };
+
+        // 3. Save Now button click madidre ee function run aguttade
+        async function confirmSave() {
+            closeModal();
+            const btn = document.getElementById('save-btn');
+            btn.textContent = 'Saving...';
+
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const updates = {
+                looking_for: document.getElementById('looking_for').value,
+                district: document.getElementById('district').value,
+                religion: document.getElementById('religion').value,
+                education: document.getElementById('education').value,
+                occupation: document.getElementById('occupation').value,
+                bio: document.getElementById('bio').value,
+            };
+
+            const { error } = await supabaseClient.from('profiles').update(updates).eq('id', user.id);
+            
+            if (error) {
+                alert('Error: ' + error.message);
+            } else {
+                alert('Success! Your profile has been updated.');
+            }
+            btn.textContent = 'Save Changes';
+        }
+    </script>
+</body>
+</html>

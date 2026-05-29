@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Match Heart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-72 bg-white border-r border-gray-200 hidden md:flex flex-col">
+        <div class="p-6 border-b text-center">
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-heart-pulse text-rose-500"></i> Match Heart</h1>
+        </div>
+        <nav class="p-4 space-y-2 flex-1">
+            <a href="dashboard.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                <i class="fa-solid fa-house w-6"></i> Discover
+            </a>
+            <a href="messages.html" class="flex items-center px-4 py-3 bg-rose-50 text-rose-600 rounded-xl font-medium transition">
+                <i class="fa-solid fa-message w-6"></i> Messages
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex bg-white">
+        <!-- Matches List -->
+        <div class="w-80 border-r border-gray-100 flex flex-col">
+            <div class="p-5 border-b border-gray-100 font-bold text-gray-800">Your Matches</div>
+            <div id="matches-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <p class="text-gray-400 text-sm p-4">Loading your matches...</p>
+            </div>
+        </div>
+
+        <!-- Chat Box -->
+        <div class="flex-1 flex flex-col">
+            <div id="chat-header" class="p-5 border-b border-gray-100 font-bold text-gray-800">Select a match to chat</div>
+            <div id="chat-window" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                <p class="text-center text-gray-400 mt-20">Start chatting with your matches</p>
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-white">
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="chat-input" required class="flex-1 p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-rose-500" placeholder="Type a message...">
+                    <button type="submit" class="bg-rose-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-rose-600 transition">Send</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://tnvcjxgsocikbvtbnyxw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRudmNqeGdzb2Npa2J2dGJueXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODAzMTIsImV4cCI6MjA5NTU1NjMxMn0.6JCAcDveue7QE4Z4Tl2she9OHpSIomYeL2vI7NqtTZ0';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let selectedMatchId = null;
+
+        // මැසේජ් යැවීම
+        document.getElementById('chat-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!selectedMatchId) return;
+            const input = document.getElementById('chat-input');
+            const { data: { user } } = await supabase.auth.getUser();
+            await supabase.from('messages').insert([{ sender_id: user.id, receiver_id: selectedMatchId, text: input.value }]);
+            input.value = '';
+            loadMessages(selectedMatchId);
+        };
+
+        // මැසේජ් Load කිරීම
+        async function loadMessages(matchId) {
+            selectedMatchId = matchId;
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data } = await supabase
+                .from('messages')
+                .select('*')
+                .or(`and(sender_id.eq.${user.id},receiver_id.eq.${matchId}),and(sender_id.eq.${matchId},receiver_id.eq.${user.id})`)
+                .order('created_at', { ascending: true });
+
+            const window = document.getElementById('chat-window');
+            window.innerHTML = data.map(msg => `
+                <div class="${msg.sender_id === user.id ? 'text-right' : 'text-left'}">
+                    <p class="inline-block p-3 rounded-2xl ${msg.sender_id === user.id ? 'bg-rose-500 text-white' : 'bg-white border'}">
+                        ${msg.text}
+                    </p>
+                </div>
+            `).join('');
+            window.scrollTop = window.scrollHeight;
+        }
+
+        // Mutual Matches Load කිරීම
+        async function fetchMatches() {
+            const { data: { user } } = await supabase.auth.getUser();
+            console.log("Logged in user:", user.id);
+            const { data: allLikes } = await supabase.from('likes').select('*');
+            console.log("All likes in DB:", allLikes);
+            
+            // Mutual match චෙක් කිරීම (A->B සහ B->A)
+            const matches = allLikes.filter(l => l.sender_id === user.id).map(l => l.receiver_id)
+             .filter(id => allLikes.find(l => l.sender_id === id && l.receiver_id === user.id));
+
+            const list = document.getElementById('matches-list');
+            list.innerHTML = '';
+
+            for (const matchId of matches) {
+                const { data: profile } = await supabase.from('profiles').select('first_name, avatar_url').eq('id', matchId).single();
+                if (profile) {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition";
+                    div.onclick = () => {
+                        document.getElementById('chat-header').innerText = `Chat with ${profile.first_name}`;
+                        loadMessages(matchId);
+                    };
+                    div.innerHTML = `<img src="${profile.avatar_url}" class="w-10 h-10 rounded-full bg-gray-200"><span class="font-medium">${profile.first_name}</span>`;
+                    list.appendChild(div);
+                }
+            }
+        }
+
+        window.onload = fetchMatches;
+    </script>
+</body>
+</html>

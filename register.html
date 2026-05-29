@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Match Heart</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        
+        /* Smooth Step Transitions */
+        .step-hidden { display: none; }
+        .step-active { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating Label Magic */
+        .floating-input:focus ~ .floating-label,
+        .floating-input:not(:placeholder-shown) ~ .floating-label {
+            transform: translateY(-130%) scale(0.85);
+            background-color: white;
+            padding: 0 4px;
+            color: #f43f5e;
+        }
+
+        /* Avatar Selection Highlight */
+        .avatar-selected {
+            border: 4px solid #f43f5e;
+            transform: scale(1.15);
+            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-8">
+
+    <!-- Main Split-Screen Container -->
+    <div class="max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-[750px]">
+        
+        <!-- Left Panel (Branding) -->
+        <div class="hidden md:flex md:w-2/5 bg-gradient-to-br from-rose-500 to-rose-700 p-10 flex-col justify-between relative overflow-hidden">
+            <!-- Background Decorations -->
+            <div class="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-10 -right-20 w-80 h-80 bg-black/10 rounded-full blur-3xl"></div>
+            
+            <div class="relative z-10">
+                <a href="index.html" class="flex items-center gap-2 text-white text-2xl font-bold mb-8 hover:scale-105 transition transform origin-left w-max">
+                    <i class="fa-solid fa-heart-pulse"></i> Match Heart
+                </a>
+                <h1 class="text-4xl font-bold text-white leading-tight mb-4">
+                    Find The One <br>Who Matches Your Heart
+                </h1>
+                <p class="text-rose-100 text-sm leading-relaxed">
+                    Join our secure platform today. We verify every user to ensure you find real, meaningful connections.
+                </p>
+            </div>
+
+            <div class="relative z-10 bg-white/20 backdrop-blur-md rounded-2xl p-5 border border-white/30">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="flex -space-x-3">
+                        <img class="w-8 h-8 rounded-full border-2 border-rose-500" src="https://i.pravatar.cc/150?img=27" alt="User">
+                        <img class="w-8 h-8 rounded-full border-2 border-rose-500" src="https://i.pravatar.cc/150?img=10" alt="User">
+                        <img class="w-8 h-8 rounded-full border-2 border-rose-500" src="https://i.pravatar.cc/150?img=9" alt="User">
+                    </div>
+                    <p class="text-white text-xs font-medium">100+ members verified</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel (Form Area) -->
+        <div class="w-full md:w-3/5 p-8 md:p-12 flex flex-col justify-center relative overflow-y-auto">
+            
+            <div class="max-w-md w-full mx-auto">
+                
+                <!-- Header & Progress -->
+                <div class="mb-8 text-center md:text-left">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
+                    <p id="step-title" class="text-rose-500 font-medium text-sm tracking-wide uppercase">Step 1: Secure Setup</p>
+                </div>
+
+                <!-- Error/Success Messages -->
+                <div id="message-box" class="hidden mb-6 p-4 rounded-xl text-sm font-medium flex items-start gap-3 shadow-sm border"></div>
+
+                <!-- ================= STEP 1: Email & Password ================= -->
+                <div id="step-1" class="step-active">
+                    <div class="space-y-6">
+                        <div class="relative">
+                            <input type="email" id="email" class="floating-input block w-full px-4 py-4 text-gray-900 bg-transparent border-2 border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-0 focus:border-rose-500 peer transition-colors" placeholder=" ">
+                            <label class="floating-label absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 z-10 origin-[0] left-4 peer-focus:text-rose-500 cursor-text">Email Address</label>
+                        </div>
+
+                        <div class="relative">
+                            <input type="password" id="password" class="floating-input block w-full px-4 py-4 text-gray-900 bg-transparent border-2 border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-0 focus:border-rose-500 peer transition-colors" placeholder=" ">
+                            <label class="floating-label absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 z-10 origin-[0] left-4 peer-focus:text-rose-500 cursor-text">Create Password (Min 6 chars)</label>
+                        </div>
+
+                        <button type="button" onclick="sendOTP()" id="btn-send-otp" class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 flex justify-center items-center gap-2 group">
+                            Send Verification Code <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        
+                        <p class="text-center text-sm text-gray-500 mt-4">
+                            Already have an account? <a href="login.html" class="text-rose-500 font-semibold hover:underline">Log in</a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ================= STEP 2: OTP Verification ================= -->
+                <div id="step-2" class="step-hidden">
+                    <div class="space-y-6 text-center">
+                        <div class="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-2 text-rose-500 text-2xl">
+                            <i class="fa-regular fa-envelope-open"></i>
+                        </div>
+                        <p class="text-gray-600 mb-4">We sent an 8-digit code to your email. Please enter it below.</p>
+                        
+                        <input type="text" id="otp-code" maxlength="8" class="w-full text-center text-3xl font-bold tracking-[0.5em] px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-rose-500 outline-none transition-colors" placeholder="••••••••">
+                        
+                        <button type="button" onclick="verifyOTP()" id="btn-verify-otp" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 mt-4">
+                            Verify Code
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================= STEP 3: Personal Details ================= -->
+                <div id="step-3" class="step-hidden">
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative">
+                                <input type="text" id="first-name" class="floating-input block w-full px-4 py-3.5 text-gray-900 bg-transparent border-2 border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-0 focus:border-rose-500 peer" placeholder=" ">
+                                <label class="floating-label absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 z-10 origin-[0] left-4 peer-focus:text-rose-500">First Name</label>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="last-name" class="floating-input block w-full px-4 py-3.5 text-gray-900 bg-transparent border-2 border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-0 focus:border-rose-500 peer" placeholder=" ">
+                                <label class="floating-label absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 z-10 origin-[0] left-4 peer-focus:text-rose-500">Last Name</label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">Date of Birth</label>
+                            <input type="date" id="dob" class="w-full px-4 py-3.5 text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-rose-500 transition-colors">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">I am a</label>
+                                <select id="gender" class="w-full px-4 py-3.5 text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-rose-500 transition-colors">
+                                    <option value="male">Man</option>
+                                    <option value="female">Woman</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">Looking for</label>
+                                <select id="looking-for" class="w-full px-4 py-3.5 text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-rose-500 transition-colors">
+                                    <option value="female">Woman</option>
+                                    <option value="male">Man</option>
+                                    <option value="both">Everyone</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="goToStep4()" class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 mt-2 flex justify-center items-center gap-2 group">
+                            Continue <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================= STEP 4: Avatar & Complete ================= -->
+                <div id="step-4" class="step-hidden">
+                    <div class="text-center mb-6">
+                        <p class="text-gray-600">Choose how you want to appear to others.</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-6 mb-8 justify-items-center">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=f43f5e" onclick="selectAvatar(this.src, this)" class="w-20 h-20 rounded-full cursor-pointer transition-all duration-300 avatar-img bg-rose-50 hover:shadow-lg">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Mia&backgroundColor=f43f5e" onclick="selectAvatar(this.src, this)" class="w-20 h-20 rounded-full cursor-pointer transition-all duration-300 avatar-img bg-rose-50 hover:shadow-lg">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Jack&backgroundColor=f43f5e" onclick="selectAvatar(this.src, this)" class="w-20 h-20 rounded-full cursor-pointer transition-all duration-300 avatar-img bg-rose-50 hover:shadow-lg">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Luna&backgroundColor=f43f5e" onclick="selectAvatar(this.src, this)" class="w-20 h-20 rounded-full cursor-pointer transition-all duration-300 avatar-img bg-rose-50 hover:shadow-lg">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Leo&backgroundColor=f43f5e" onclick="selectAvatar(this.src, this)" class="w-20 h-20 rounded-full cursor-pointer transition-all duration-300 avatar-img bg-rose-50 hover:shadow-lg">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Zoe&backgroundColor=f43f5e" onclick="selectAvatar(this.src, this)" class="w-20 h-20 rounded-full cursor-pointer transition-all duration-300 avatar-img bg-rose-50 hover:shadow-lg">
+                    </div>
+                    
+                    <button type="button" onclick="saveProfile()" id="btn-complete" class="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Complete Profile
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // 1. Supabase Config (Using the keys you provided)
+        const SUPABASE_URL = 'https://tnvcjxgsocikbvtbnyxw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRudmNqeGdzb2Npa2J2dGJueXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODAzMTIsImV4cCI6MjA5NTU1NjMxMn0.6JCAcDveue7QE4Z4Tl2she9OHpSIomYeL2vI7NqtTZ0';
+        
+        // Custom name to avoid browser conflict
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Global Variables
+        let currentUserEmail = '';
+        let currentUserId = '';
+        let selectedAvatarUrl = '';
+
+        // UI Helper: Show Messages
+        function showMessage(msg, isError = true) {
+            const box = document.getElementById('message-box');
+            box.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'} mt-0.5"></i> <span>${msg}</span>`;
+            box.className = `mb-6 p-4 rounded-xl text-sm font-medium flex items-start gap-3 shadow-sm border ${isError ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`;
+            box.classList.remove('hidden');
+        }
+
+        function switchStep(hideId, showId, title) {
+            document.getElementById('message-box').classList.add('hidden');
+            document.getElementById(hideId).classList.add('step-hidden');
+            document.getElementById(hideId).classList.remove('step-active');
+            
+            document.getElementById(showId).classList.remove('step-hidden');
+            document.getElementById(showId).classList.add('step-active');
+            document.getElementById('step-title').textContent = title;
+        }
+
+        // --- STEP 1: Send OTP ---
+        async function sendOTP() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('btn-send-otp');
+
+            if (!email || password.length < 6) {
+                showMessage("Please enter a valid email and a password (min 6 chars).");
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            btn.disabled = true;
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+
+            btn.innerHTML = 'Send Verification Code <i class="fa-solid fa-arrow-right ml-2"></i>';
+            btn.disabled = false;
+
+            if (error) {
+                showMessage(error.message);
+            } else {
+                currentUserEmail = email;
+                switchStep('step-1', 'step-2', 'Step 2: Verify Email');
+            }
+        }
+
+        // --- STEP 2: Verify OTP ---
+        async function verifyOTP() {
+            const otp = document.getElementById('otp-code').value;
+            const btn = document.getElementById('btn-verify-otp');
+
+            // අංක 8ක් තිබිය යුතු බවට පරීක්ෂාව
+            if (otp.length !== 8) {
+                showMessage("Please enter the complete 8-digit code.");
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+
+            const { data, error } = await supabaseClient.auth.verifyOtp({
+                email: currentUserEmail,
+                token: otp,
+                type: 'signup'
+            });
+
+            btn.innerHTML = 'Verify Code';
+            btn.disabled = false;
+
+            if (error) {
+                showMessage(error.message);
+            } else {
+                // Verification සාර්ථකයි. User ගේ ID එක අරගමු.
+                currentUserId = data.user.id;
+                switchStep('step-2', 'step-3', 'Step 3: Personal Details');
+            }
+        }
+
+        // --- STEP 3: Basic Validation ---
+        function goToStep4() {
+            const fname = document.getElementById('first-name').value;
+            const dob = document.getElementById('dob').value;
+
+            if(!fname || !dob) {
+                showMessage("First Name and Date of Birth are required!");
+                return;
+            }
+            switchStep('step-3', 'step-4', 'Step 4: Pick an Avatar');
+        }
+
+        // --- STEP 4: Avatar Selection ---
+        function selectAvatar(url, element) {
+            selectedAvatarUrl = url;
+            document.querySelectorAll('.avatar-img').forEach(img => img.classList.remove('avatar-selected'));
+            element.classList.add('avatar-selected');
+        }
+
+        // --- FINAL: Save to Profiles Table ---
+        async function saveProfile() {
+            const btn = document.getElementById('btn-complete');
+            
+            if (!selectedAvatarUrl) {
+                showMessage("Please click on an avatar to select it.");
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Profile...';
+            btn.disabled = true;
+
+            // Form එකෙන් දත්ත එකතු කිරීම
+            const profileData = {
+                id: currentUserId, // මේක auth.users එකේ ID එක
+                email: currentUserEmail,
+                first_name: document.getElementById('first-name').value,
+                last_name: document.getElementById('last-name').value,
+                dob: document.getElementById('dob').value,
+                gender: document.getElementById('gender').value,
+                looking_for: document.getElementById('looking-for').value,
+                avatar_url: selectedAvatarUrl
+            };
+
+            // Database එකට Insert කිරීම
+            const { error } = await supabaseClient
+                .from('profiles')
+                .insert([profileData]);
+
+            if (error) {
+                showMessage(error.message);
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Complete Profile';
+                btn.disabled = false;
+            } else {
+                showMessage("Welcome to Match Heart! Redirecting...", false);
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html'; // ඔක්කොම හරි ගියාම මුල් පිටුවට යනවා
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

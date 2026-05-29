@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Match Heart</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .match-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.3); }
+        
+        /* Loading Spinner Full Screen */
+        #page-loader {
+            position: fixed; inset: 0; background: white; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Page Loader (Shows while checking Auth) -->
+    <div id="page-loader">
+        <i class="fa-solid fa-heart-pulse text-5xl text-rose-500 fa-bounce mb-4"></i>
+        <h2 class="text-xl font-semibold text-gray-700">Loading your matches...</h2>
+    </div>
+
+    <!-- Sidebar (Left Panel) -->
+    <aside class="w-72 glass-panel border-r border-gray-200 flex flex-col justify-between hidden md:flex shadow-sm z-10">
+        <div>
+            <!-- Logo -->
+            <div class="p-6 border-b border-gray-100 text-center">
+                <h1 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-heart-pulse text-rose-500"></i> Match Heart</h1>
+            </div>
+            
+            <!-- Current User Profile Info -->
+            <div class="p-6 text-center border-b border-gray-100">
+                <div class="relative inline-block">
+                    <img id="my-avatar" src="https://api.dicebear.com/7.x/adventurer/svg?seed=placeholder" alt="My Avatar" class="w-24 h-24 rounded-full border-4 border-rose-100 shadow-md mx-auto bg-white">
+                    <div class="absolute bottom-1 right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
+                </div>
+                <h2 id="my-name" class="mt-4 text-lg font-bold text-gray-800">Loading...</h2>
+                <p id="my-email" class="text-sm text-gray-500">loading@email.com</p>
+                <div class="mt-4 bg-rose-50 rounded-lg p-3 text-sm text-rose-600 font-medium border border-rose-100">
+                    <i class="fa-solid fa-gem mr-1"></i> Premium Member
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-2">
+                <a href="about-me.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="fa-solid fa-user w-6"></i> About Me
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 bg-rose-50 text-rose-600 rounded-xl font-medium transition">
+                    <i class="fa-solid fa-house w-6"></i> Discover
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="fa-solid fa-heart w-6"></i> Likes You
+                </a>
+                <a href="messages.html" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="fa-solid fa-message w-6"></i> Messages
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout Button -->
+        <div class="p-4 border-t border-gray-100">
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium transition">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        
+        <!-- Top Bar (Filters) -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 px-8 py-5 flex flex-col sm:flex-row justify-between items-center z-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Discover Matches</h2>
+            
+            <!-- Filters -->
+            <div class="flex space-x-3 w-full sm:w-auto">
+                <div class="relative w-full sm:w-48">
+                    <select id="filter-gender" onchange="filterMatches()" class="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 shadow-sm font-medium">
+                        <option value="all">Everyone</option>
+                        <option value="female">Women</option>
+                        <option value="male">Men</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+                
+                <button class="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-full hover:bg-gray-50 transition shadow-sm font-medium">
+                    <i class="fa-solid fa-sliders"></i> Filters
+                </button>
+            </div>
+        </header>
+
+        <!-- Match Feed (Grid) -->
+        <div class="flex-1 overflow-y-auto p-8">
+            <!-- No Matches Message (Hidden by default) -->
+            <div id="no-matches" class="hidden flex flex-col items-center justify-center h-full text-center">
+                <i class="fa-regular fa-face-frown-open text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-medium text-gray-600">No matches found</h3>
+                <p class="text-gray-400">Try changing your filters to see more people.</p>
+            </div>
+
+            <!-- Matches Grid -->
+            <div id="matches-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Match Cards will be injected here by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // 1. Supabase Initialization
+        const SUPABASE_URL = 'https://tnvcjxgsocikbvtbnyxw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRudmNqeGdzb2Npa2J2dGJueXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODAzMTIsImV4cCI6MjA5NTU1NjMxMn0.6JCAcDveue7QE4Z4Tl2she9OHpSIomYeL2vI7NqtTZ0';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let allMatches = []; // Store all profiles here for filtering
+
+        // 2. Initialize Dashboard (Check Auth first)
+        async function initDashboard() {
+            try {
+                // Get current logged-in session
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                
+                if (sessionError || !session) {
+                    // Not logged in! Redirect to login page
+                    const loginUrl = window.location.origin + '/login.html';
+                    window.location.href = loginUrl;
+                    return;
+                }
+
+                currentUser = session.user;
+                
+                // Fetch Data concurrently for better speed
+                await Promise.all([
+                    loadMyProfile(),
+                    loadMatches()
+                ]);
+
+                // Hide loader when everything is ready
+                document.getElementById('page-loader').style.display = 'none';
+
+            } catch (err) {
+                console.error("Initialization Error:", err);
+                alert("Something went wrong loading your dashboard.");
+            }
+        }
+
+        // 3. Load Current User's Profile (Sidebar)
+        async function loadMyProfile() {
+            const { data: profile, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (error) {
+                console.error("Error fetching profile:", error);
+                return;
+            }
+
+            if (profile) {
+                document.getElementById('my-name').textContent = `${profile.first_name || 'User'} ${profile.last_name || ''}`;
+                document.getElementById('my-email').textContent = currentUser.email;
+                if (profile.avatar_url) {
+                    document.getElementById('my-avatar').src = profile.avatar_url;
+                }
+            }
+        }
+
+        // 4. Load Matches (All users EXCEPT the current user)
+        async function loadMatches() {
+            const { data: profiles, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .neq('id', currentUser.id); // .neq means "Not Equal" -> Don't fetch my own profile!
+
+            if (error) {
+                console.error("Error fetching matches:", error);
+                return;
+            }
+
+            allMatches = profiles || [];
+            renderMatches(allMatches);
+        }
+
+        // 5. Calculate Age from Date of Birth
+        function calculateAge(dobStr) {
+            if (!dobStr) return 'N/A';
+            const dob = new Date(dobStr);
+            const diff_ms = Date.now() - dob.getTime();
+            const age_dt = new Date(diff_ms); 
+            return Math.abs(age_dt.getUTCFullYear() - 1970);
+        }
+
+        // 6. Render Match Cards to the Screen
+        function renderMatches(matchesArray) {
+            const grid = document.getElementById('matches-grid');
+            const noMatchesMsg = document.getElementById('no-matches');
+            
+            grid.innerHTML = ''; // Clear current grid
+
+            if (matchesArray.length === 0) {
+                grid.classList.add('hidden');
+                noMatchesMsg.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            noMatchesMsg.classList.remove('hidden'); // පරණ එක අයින් කරන්න
+            noMatchesMsg.classList.add('hidden');
+
+            matchesArray.forEach(profile => {
+                const age = calculateAge(profile.dob);
+                const fullName = `${profile.first_name || 'Anonymous'} ${profile.last_name || ''}`;
+                const avatar = profile.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg?seed=placeholder';
+                const genderIcon = profile.gender === 'female' ? '<i class="fa-solid fa-venus text-pink-500"></i>' : '<i class="fa-solid fa-mars text-blue-500"></i>';
+
+                // Interests ටික Badge විදිහට හදාගන්න
+                let interests = profile.interests;
+                if (typeof interests === 'string') interests = interests.split(',');
+                const interestsHTML = (Array.isArray(interests) ? interests : []).map(i => 
+                    `<span class="bg-rose-50 text-rose-500 text-[10px] px-2 py-0.5 rounded-full font-semibold">${i.trim()}</span>`
+                ).join('');
+
+                const cardHTML = `
+                    <div class="match-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition duration-300 flex flex-col">
+                        <div class="h-40 bg-rose-50 relative flex justify-center items-center">
+                            <img src="${avatar}" alt="${fullName}" class="w-24 h-24 rounded-full border-4 border-white shadow-md z-10 bg-white">
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col justify-between text-center">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 flex justify-center items-center gap-2">
+                                    ${fullName} ${genderIcon}
+                                </h3>
+                                <p class="text-gray-500 text-xs mt-1 font-semibold">${age} years old</p>
+                                
+                                <div class="mt-3 text-xs text-gray-600 space-y-1.5 text-left bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                    <p><i class="fa-solid fa-location-dot text-rose-400 w-5"></i> <strong>${profile.district || 'N/A'}</strong></p>
+                                    <p><i class="fa-solid fa-graduation-cap text-rose-400 w-5"></i> ${profile.education || 'N/A'}</p>
+                                    <p><i class="fa-solid fa-briefcase text-rose-400 w-5"></i> ${profile.occupation || 'N/A'}</p>
+                                </div>
+
+                                <div class="mt-3 flex flex-wrap gap-1 justify-center">
+                                    ${interestsHTML || '<span class="text-[10px] text-gray-400 italic">No interests</span>'}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex gap-2">
+                                <button onclick="sendHeart('${profile.id}')" class="flex-1 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-100 py-2 rounded-xl font-semibold transition duration-300 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-heart"></i> Like
+                                </button>
+                                <button class="w-12 bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 rounded-xl font-semibold transition flex items-center justify-center">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        // 7. Filter Logic (Triggered when dropdown changes)
+        function filterMatches() {
+            const genderFilter = document.getElementById('filter-gender').value;
+            
+            let filtered = allMatches;
+
+            if (genderFilter !== 'all') {
+                filtered = allMatches.filter(profile => profile.gender === genderFilter);
+            }
+
+            renderMatches(filtered);
+        }
+
+        // 8. Log Out Function
+        async function logout() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (!error) {
+                const loginUrl = window.location.origin + '/index.html';
+                window.location.href = loginUrl;
+            } else {
+                alert("Error logging out!");
+            }
+        }
+
+        // Dummy function for Like button
+        function sendHeart(userId) {
+            alert(`Feature coming soon! Heart sent to User ID: ${userId}`);
+        }
+
+        // Start everything when the page loads
+        window.onload = initDashboard;
+
+        async function sendHeart(receiverId) {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            
+            // 1. Like එක Database එකට දාන්න
+            await supabaseClient.from('likes').insert([{ sender_id: user.id, receiver_id: receiverId }]);
+            
+            // 2. අනිත් පැත්තේ කෙනාත් Like කරලාද බලන්න (Mutual Match)
+            const { data: mutualLike } = await supabaseClient
+                .from('likes')
+                .select('*')
+                .eq('sender_id', receiverId)
+                .eq('receiver_id', user.id);
+
+            if (mutualLike.length > 0) {
+                alert("🎉 It's a match! You can now chat.");
+            } else {
+                alert("Heart sent! ❤️");
+            }
+        }
+
+
+
+        async function checkMatch(myId, receiverId) {
+            const { data } = await supabaseClient
+                .from('likes')
+                .select('*')
+                .eq('sender_id', receiverId)
+                .eq('receiver_id', myId);
+
+            if (data && data.length > 0) {
+                // දෙන්නම Like කරලා නම් මේක Match එකක්!
+                alert("🎉 It's a match! You can now start chatting.");
+            }
+        }
+
+    </script>
+</body>
+</html>
